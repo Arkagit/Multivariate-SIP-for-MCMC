@@ -1,0 +1,110 @@
+
+R version 4.2.1 (2022-06-23) -- "Funny-Looking Kid"
+Copyright (C) 2022 The R Foundation for Statistical Computing
+Platform: x86_64-pc-linux-gnu (64-bit)
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+  Natural language support but running in an English locale
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+> library(mcmcse)
+> load("variance.Rdata")
+>      
+> #log_10_n = log(samp_size)/log(10)
+> 
+> add_legend <- function(...) {
++   opar <- par(fig=c(0, 1, 0, 1), oma=c(0, 0, 0, 0), 
++     mar=c(0, 0, 0, 0), new=TRUE)
++   on.exit(par(opar))
++   plot(0, 0, type='n', bty='n', xaxt='n', yaxt='n')
++   legend(...)
++ }
+> 
+> norm_bmopt = matrix(0, nrow = reps, ncol = length(samp_size))
+> norm_bmth = matrix(0, nrow = reps, ncol = length(samp_size))
+> 
+> for(i in 1:reps){
++ 	for(j in 1:length(samp_size)){
++ 		norm_bmth[i,j] = norm(EST[[i]][[j]][[1]], type = "F")
++ 		norm_bmopt[i,j] = norm(EST[[i]][[j]][[2]], type = "F")
++ 	}
++ }
+> #pdf("boxplot.pdf", height = 6, width = 6)
+> #par(mar = c(5.1, 4.8, 4.1, 2.1))
+> #boxplot(ess_reg1,ess_reg2, ess_bmopt, ess_bmth, xlab = "Variance Estimators", ylab = "Effective Sample Size",
+> #	main = "ESS for different variance estimators", col = c("blue", "green","yellow","purple"),
+>  #  names = c("1-step","2-step","BM(opt)","BM(theory)"))
+> #dev.off()
+> 
+> BMopt_frob = apply(norm_bmopt, 2, sd)/sqrt(reps)
+> BMth_frob = apply(norm_bmth, 2, sd)/sqrt(reps)
+> 
+> 
+> pdf("plot_frob.pdf", height = 5, width = 5)
+> par(mar = c(5.1, 4.8, 4.1, 2.1))
+> 
+> plot(samp_size, colMeans(norm_bmopt), ylim = c(min(colMeans(norm_bmth), colMeans(norm_bmopt)), max(colMeans(norm_bmth), colMeans(norm_bmopt))), 
++ 	type = 'l', col = "blue", ylab = "Frobenius Norm", xlab =  "Chain Length")
+> segments(x0 = samp_size, y0 = colMeans(norm_bmopt) - 1.96*BMopt_frob, 
++ 	y1 = colMeans(norm_bmopt) + 1.96*BMopt_frob, col = "blue", lty = 2)
+> 
+> lines(samp_size, colMeans(norm_bmth), type = 'l', col = "skyblue", lwd = 2)
+> segments(x0 = samp_size, y0 = colMeans(norm_bmth) - 1.96*BMth_frob, 
++ 	y1 = colMeans(norm_bmth) + 1.96*BMth_frob, col = "skyblue", lty = 2, lwd = 2)
+> 
+> #abline(h = 0, lty = 2)
+> legend("bottomright", bty = "n",legend = c("BM(optimal)", "BM(Theory)"), 
++ 	col = c("blue", "skyblue"), lty = 2, cex=0.8)
+> 
+> dev.off()
+null device 
+          1 
+> 
+> ########################################################################
+> ess_bmopt = matrix(0, nrow = reps, ncol = length(samp_size))
+> ess_bmth = matrix(0, nrow = reps, ncol = length(samp_size))
+> 
+> for(i in 1:reps){
++ 	for(j in 1:length(samp_size)){
++ 		ess_bmth[i,j] = EST[[i]][[j]][[3]]/samp_size[j]
++ 		ess_bmopt[i,j] = EST[[i]][[j]][[4]]/samp_size[j]
++ 	}
++ }
+> 
+> 
+> BMopt_ess = apply(ess_bmopt, 2, sd)/sqrt(reps)
+> BMth_ess = apply(ess_bmth, 2, sd)/sqrt(reps)
+> 
+> pdf("plot_ess.pdf", height = 5, width = 5)
+> par(mar = c(5.1, 4.8, 4.1, 2.1))
+> 
+> plot(samp_size, colMeans(ess_bmopt), type = 'l',  col = "blue", ylim = c(min(colMeans(ess_bmth), colMeans(ess_bmopt)), max(colMeans(ess_bmth), colMeans(ess_bmopt))),
++ 	ylab = "ESS/n", xlab =  "Chain Length")
+> segments(x0 = samp_size, y0 = colMeans(ess_bmopt) - 1.96*BMopt_ess, 
++ 	y1 = colMeans(ess_bmopt) + 1.96*BMopt_ess, col = "blue", lty = 2)
+> 
+> lines(samp_size, colMeans(ess_bmth), type = 'l', col = "skyblue", lwd = 2)
+> segments(x0 = samp_size, y0 = colMeans(ess_bmth) - 1.96*BMth_ess, 
++ 	y1 = colMeans(ess_bmth) + 1.96*BMth_ess, col = "skyblue", lty = 2, lwd = 2)
+> 
+> #abline(h = (det(Target_mat)/det(Tr))^(1/2), lty = 2)
+> legend("topright", bty = "n",legend = c("BM(cuberoot)", "BM(sqroot)"), 
++ 	col = c("blue", "skyblue"), lty = 2, cex=0.8)
+> 
+> dev.off()
+null device 
+          1 
+> 
+> proc.time()
+   user  system elapsed 
+  0.480   0.037   0.504 
